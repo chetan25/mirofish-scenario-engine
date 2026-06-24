@@ -481,6 +481,7 @@
         const API_BASE = '/api';
         let currentScenario = '';
         let questionnaireData = [];
+        let storedAnswers = {};  // Store answers for continue debate
         let debateController = null;  // For aborting requests
         let debateResults = null;
         
@@ -538,6 +539,9 @@
             questionnaireData.forEach((q, i) => {
                 answers[q.id] = document.getElementById(`q${i}`).value;
             });
+            
+            // Save for continued debates
+            storedAnswers = answers;
             
             // Hide questionnaire, show debate section with loading
             document.getElementById('questionnaire').classList.remove('active');
@@ -666,10 +670,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         scenario_type: currentScenario,
-                        context: questionnaireData.reduce((acc, q, i) => {
-                            acc[q.id] = document.getElementById(`q${i}`)?.value || '';
-                            return acc;
-                        }, {}),
+                        context: storedAnswers,  // Use stored answers, not form elements
                         user_input: userInput,
                         previous_debate: debateResults.debate
                     })
