@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy frontend
+COPY /root/side-hustle-simulator /app
+
+# Install HTTP server
+RUN pip install --no-cache-dir http-server
+
+EXPOSE 3000
+
+CMD ["python", "-m", "http.server", "3000"]

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish Scenario Engine - Multi-Agent Debates</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        header h1 { font-size: 2em; margin-bottom: 5px; }
+        header p { color: #666; }
+        
+        .scenario-picker {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .scenario-picker.active {
+            display: block;
+        }
+        
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .scenario-card {
+            padding: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .scenario-card:hover {
+            border-color: #2a5298;
+            background: #f5f7ff;
+            transform: translateY(-2px);
+        }
+        
+        .scenario-card.active {
+            border-color: #2a5298;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        
+        .scenario-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .scenario-card h3 {
+            margin: 15px 0 5px;
+            font-size: 1.3em;
+        }
+        
+        .scenario-card p {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .questionnaire {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .questionnaire.active {
+            display: block;
+        }
+        
+        .question-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2a5298;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1em;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+        
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .progress {
+            margin-bottom: 20px;
+            background: #e0e0e0;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            transition: width 0.3s;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(42, 82, 152, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            flex: 1;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .debate-section {
+            display: none;
+        }
+        
+        .debate-section.active {
+            display: block;
+        }
+        
+        .debate-title {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .debate-title h2 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+        
+        .agents-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .agent-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #2a5298;
+        }
+        
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .agent-icon {
+            font-size: 2em;
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: #2a5298;
+        }
+        
+        .insight {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            color: #1565c0;
+            border-left: 3px solid #1565c0;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            margin: 12px 0 8px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
+        .section-pros {
+            background: #f1f8e9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #558b2f;
+        }
+        
+        .section-cons {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #f57f17;
+        }
+        
+        .bullet {
+            font-size: 0.9em;
+            margin: 6px 0;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        .recommendation {
+            background: #f3e5f5;
+            padding: 12px;
+            border-radius: 6px;
+            color: #6a1b9a;
+            border-left: 3px solid #6a1b9a;
+            margin-top: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .loading p {
+            color: #2a5298;
+            font-size: 1.1em;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+        
+        .loading .subtitle {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+        
+        .stop-button {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        
+        .stop-button:hover {
+            background: #d32f2f;
+        }
+        
+        .completion-banner {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1.1em;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .consensus {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        
+        .consensus h3 {
+            color: #2a5298;
+            margin-bottom: 20px;
+        }
+        
+        .consensus-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f5f7ff;
+            border-left: 4px solid #2a5298;
+            border-radius: 4px;
+        }
+        
+        .user-input-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .user-input-form textarea {
+            margin-bottom: 10px;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 MiroFish Multi-Agent Scenario Engine</h1>
+            <p>Let AI agents debate your life decisions & side hustles</p>
+        </header>
+        
+        <!-- Scenario Picker -->
+        <div class="scenario-picker active" id="scenarioPicker">
+            <h2 style="margin-bottom: 20px;">What decision are you facing?</h2>
+            
+            <div class="scenario-grid">
+                <div class="scenario-card" onclick="selectScenario('side_hustle')">
+                    <div class="scenario-icon">🚀</div>
+                    <h3>Side Hustle</h3>
+                    <p>Should I start a side business?</p>
+                    <p style="font-size: 0.8em; margin-top: 10px;">4 agents debate: Entrepreneur, Market Analyst, Finance Advisor, Life Coach</p>
+                </div>
+                
+                <div class="scenario-card" onclick="selectScenario('life_decision')">
+                    <div class="scenario-icon">🎯</div>
+                    <h3>Life Decision</h3>
+                    <p>Should I change jobs, move, commit?</p>
+                    <p style="font-size: 0.8em; margin-top: 10px;">4 agents debate: Pragmatist, Dreamer, Analyst, Advisor</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Questionnaire -->
+        <div class="questionnaire" id="questionnaire">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <form id="questionnaireForm">
+                <div id="questionsContainer"></div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="backToScenarioPicker()">Back</button>
+                    <button type="button" class="btn-primary" onclick="submitQuestionnaire()">Start Debate →</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Debate Section -->
+        <div class="debate-section" id="debateSection">
+            <div class="error" id="errorBox"></div>
+            
+            <div class="debate-title">
+                <h2>🗣️ Agent Debate in Progress</h2>
+                <p>Four AI agents are discussing your scenario from different perspectives...</p>
+            </div>
+            
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>🤖 Agents are analyzing your scenario...</p>
+                <div class="subtitle">This usually takes 10-20 seconds</div>
+                <button id="stopBtn" class="stop-button" onclick="stopDebate()" style="display: none;">⏹ Stop</button>
+            </div>
+            
+            <div class="agents-container" id="agentsContainer"></div>
+            
+            <div id="consensus" style="display: none;">
+                <div class="section-title" style="margin-top: 30px; font-size: 1.2em;">📊 Consensus Summary</div>
+                <div id="consensusContent"></div>
+                <div class="completion-banner">✅ Debate Complete!</div>
+            </div>
+                <div class="user-input-form">
+                    <h4 style="margin-bottom: 10px;">Any additional context?</h4>
+                    <textarea id="userInput" placeholder="Add information that might change the debate..." rows="4"></textarea>
+                    <button class="btn-primary" onclick="continueDebate()" style="width: 100%;">
+                        Continue Debate with New Info →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = '/api';
+        let currentScenario = '';
+        let questionnaireData = [];
+        let debateController = null;  // For aborting requests
+        let debateResults = null;
+        
+        async function selectScenario(scenario) {
+            currentScenario = scenario;
+            
+            // Update UI
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.target.closest('.scenario-card').classList.add('active');
+            
+            // Load questionnaire
+            try {
+                const resp = await fetch(`${API_BASE}/questionnaire/${scenario}`);
+                const data = await resp.json();
+                
+                // Hide picker, show questionnaire
+                document.getElementById('scenarioPicker').classList.remove('active');
+                document.getElementById('questionnaire').classList.add('active');
+                
+                // Render questions
+                renderQuestionnaire(data.questions);
+            } catch (err) {
+                showError('Failed to load questionnaire: ' + err.message);
+            }
+        }
+        
+        function renderQuestionnaire(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = questions.map((q, i) => `
+                <div class="question-group">
+                    <label for="q${i}">${q.question}</label>
+                    <textarea id="q${i}" placeholder="${q.placeholder}" required></textarea>
+                </div>
+            `).join('');
+            
+            // Update progress
+            updateProgress(0);
+            
+            questionnaireData = questions;
+        }
+        
+        function updateProgress(current) {
+            const total = questionnaireData ? questionnaireData.length : 1;
+            const percent = (current / total) * 100;
+            document.getElementById('progressBar').style.width = percent + '%';
+        }
+        
+        async function submitQuestionnaire() {
+            const form = document.getElementById('questionnaireForm');
+            
+            // Collect answers
+            const answers = {};
+            questionnaireData.forEach((q, i) => {
+                answers[q.id] = document.getElementById(`q${i}`).value;
+            });
+            
+            // Hide questionnaire, show debate section with loading
+            document.getElementById('questionnaire').classList.remove('active');
+            document.getElementById('debateSection').classList.add('active');
+            showLoading(true);
+            
+            // Setup AbortController for stop button
+            debateController = new AbortController();
+            
+            try {
+                const resp = await fetch(`${API_BASE}/debate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario_type: currentScenario,
+                        context: answers
+                    }),
+                    signal: debateController.signal
+                });
+                
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                debateResults = data;
+                renderDebate(data);
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    // User stopped the debate
+                } else {
+                    showError('Debate failed: ' + err.message);
+                }
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function renderDebate(data) {
+            const container = document.getElementById('agentsContainer');
+            
+            container.innerHTML = data.debate.map(d => {
+                const text = d.perspective;
+                
+                // Extract key phrases and structure them
+                const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+                
+                // Heuristic extraction
+                let insight = sentences[0] || 'Perspective pending...';
+                let pros = [];
+                let cons = [];
+                let recommendation = 'Consider all factors';
+                
+                // Look for opportunity/positive keywords
+                sentences.forEach(s => {
+                    if ((s.includes('opportunity') || s.includes('potential') || s.includes('growth') || s.includes('advantage')) && pros.length < 3) {
+                        pros.push(s.substring(0, 80));
+                    }
+                    if ((s.includes('risk') || s.includes('challenge') || s.includes('concern') || s.includes('obstacle')) && cons.length < 3) {
+                        cons.push(s.substring(0, 80));
+                    }
+                });
+                
+                // If we don't have enough extracted points, use generic ones
+                if (pros.length === 0) pros = [
+                    'Strong market opportunity',
+                    'Leverages existing skills',
+                    'Reasonable capital requirement'
+                ];
+                if (cons.length === 0) cons = [
+                    'Time commitment challenge',
+                    'Market competition',
+                    'Execution risk'
+                ];
+                
+                // Determine recommendation tone
+                if (text.toLowerCase().includes('caution') || text.toLowerCase().includes('risky')) {
+                    recommendation = 'Proceed with caution';
+                } else if (text.toLowerCase().includes('great') || text.toLowerCase().includes('definitely')) {
+                    recommendation = 'Go for it';
+                } else if (text.toLowerCase().includes('not') || text.toLowerCase().includes('avoid')) {
+                    recommendation = 'Not recommended';
+                }
+                
+                return `
+                    <div class="agent-card">
+                        <div class="agent-header">
+                            <div class="agent-icon">${d.icon}</div>
+                            <div class="agent-name">${d.agent}</div>
+                        </div>
+                        
+                        <div class="insight"><strong>💡 ${insight}</strong></div>
+                        
+                        <div class="section-pros">
+                            <div class="section-title">✅ Pros</div>
+                            ${pros.map(p => `<div class="bullet">• ${p}</div>`).join('')}
+                        </div>
+                        
+                        <div class="section-cons">
+                            <div class="section-title">⚠️ Cons</div>
+                            ${cons.map(c => `<div class="bullet">• ${c}</div>`).join('')}
+                        </div>
+                        
+                        <div class="recommendation"><strong>→ ${recommendation}</strong></div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Show consensus
+            const consensusDiv = document.getElementById('consensus');
+            const consensusContent = document.getElementById('consensusContent');
+            consensusContent.innerHTML = `<div class="consensus-item"><strong>📊 Overall Assessment:</strong> ${data.consensus}</div>`;
+            consensusDiv.style.display = 'block';
+        }
+        
+        async function continueDebate() {
+            const userInput = document.getElementById('userInput').value;
+            if (!userInput.trim()) {
+                showError('Please add some context');
+                return;
+            }
+            
+            showLoading(true);
+            document.getElementById('consensus').style.display = 'none';
+            
+            try {
+                const resp = await fetch(`${API_BASE}/debate/continue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario_type: currentScenario,
+                        context: questionnaireData.reduce((acc, q, i) => {
+                            acc[q.id] = document.getElementById(`q${i}`)?.value || '';
+                            return acc;
+                        }, {}),
+                        user_input: userInput,
+                        previous_debate: debateResults.debate
+                    })
+                });
+                
+                debateResults = await resp.json();
+                
+                // Update debate with new results
+                renderDebate(debateResults);
+                document.getElementById('userInput').value = '';
+                
+            } catch (err) {
+                showError('Failed to continue debate: ' + err.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function backToScenarioPicker() {
+            document.getElementById('questionnaire').classList.remove('active');
+            document.getElementById('scenarioPicker').classList.add('active');
+            document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+            currentScenario = null;
+        }
+        
+        function showLoading(show) {
+            const loadingDiv = document.getElementById('loading');
+            const stopBtn = document.getElementById('stopBtn');
+            if (show) {
+                loadingDiv.style.display = 'block';
+                stopBtn.style.display = 'inline-block';
+            } else {
+                loadingDiv.style.display = 'none';
+                stopBtn.style.display = 'none';
+            }
+        }
+        
+        function stopDebate() {
+            if (debateController) {
+                debateController.abort();
+            }
+            showLoading(false);
+            document.getElementById('agentsContainer').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">❌ Debate stopped by user</div>';
+        }
+        
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.textContent = msg;
+            box.classList.add('active');
+            setTimeout(() => box.classList.remove('active'), 5000);
+        }
+    </script>
+</body>
+</html>

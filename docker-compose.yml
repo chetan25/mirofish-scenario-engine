@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Backend - MiroFish API
+  backend:
+    build:
+      context: /root/side-hustle-simulator
+      dockerfile: Dockerfile.backend
+    container_name: side-hustle-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MODEL=openai/gpt-3.5-turbo
+    restart: unless-stopped
+    networks:
+      - side-hustle-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Frontend - Web UI
+  frontend:
+    build:
+      context: /root/side-hustle-simulator
+      dockerfile: Dockerfile.frontend
+    container_name: side-hustle-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://backend:5001
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - side-hustle-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  side-hustle-network:
+    driver: bridge
